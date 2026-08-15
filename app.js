@@ -1,215 +1,43 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-
-const $ = (s, root = document) => root.querySelector(s);
-const $$ = (s, root = document) => [...root.querySelectorAll(s)];
-const WHATSAPP = 'https://wa.me/94776380753';
-const USD_LKR = 305;
-
-const vehicles = [
-  {id:'magnite',name:'Nissan Magnite',className:'Compact SUV',group:'suv',image:'assets/fleet/magnite.jpg',color:0xc8c8c8,capacity:5},
-  {id:'yaris-cross',name:'Toyota Yaris Cross',className:'Hybrid SUV',group:'suv',image:'assets/fleet/yaris-cross.jpg',color:0xe8e8e8,capacity:5},
-  {id:'alto',name:'Suzuki Alto',className:'Economy City',group:'small',image:'assets/fleet/alto.jpg',color:0xf0f0f0,capacity:4},
-  {id:'axio',name:'Toyota Axio',className:'Executive Sedan',group:'sedan',image:'assets/fleet/axio.jpg',color:0xd7d7d7,capacity:5},
-  {id:'prius',name:'Toyota Prius',className:'Hybrid Elite',group:'sedan',image:'assets/fleet/prius.jpg',color:0xe2e2e2,capacity:5},
-  {id:'vitz',name:'Toyota Vitz',className:'Urban Compact',group:'hatch',image:'assets/fleet/vitz.jpg',color:0xbebebe,capacity:5},
-  {id:'kdh',name:'Toyota KDH High Roof',className:'Group Transit Van',group:'van',image:'assets/fleet/kdh.jpg',color:0xe5e5e5,capacity:11},
-  {id:'xpander',name:'Mitsubishi Xpander',className:'7-Seater MPV',group:'suv',image:'assets/fleet/xpander.jpg',color:0xbdbdbd,capacity:7}
-];
-
-const rates = {
-  small:{name:'SMALL CARS',extra:40,hour:300,local:'20,000–50,000',abroad:'50,000–100,000',rows:[['Alto K / Alto C / Alto Auto',['3,000–5,000','4,000–6,000','5,500–7,500','7,500–9,500']],['Passo / Wagon R',['6,000–7,500','7,000–8,500','8,500–10,000','10,500–12,000']]]},
-  hatch:{name:'HATCHBACK / MINI SUV',extra:50,hour:500,local:'30,000–40,000',abroad:'60,000–80,000',rows:[['Vitz / Nissan Leaf / Aqua / Vitz New / GP5 / Yaris',['6,500–7,500','8,500–9,000','10,500–11,500','13,000–14,500']]]},
-  sedan:{name:'SEDAN / HYBRID',extra:55,hour:500,local:'40,000',abroad:'80,000',rows:[['Insight / Shuttle / Prius / Premio / Axio Hybrid',['7,000–9,000','8,500–11,000','10,500–13,500','13,000–16,500']]]},
-  suv:{name:'SUV / MINI SUV',extra:90,hour:1000,local:'30,000–150,000',abroad:'60,000–200,000',rows:[['Magnite / Vezel / Raize / CHR / Yaris Cross / VEZEL RS / Outlander / DFSK 580 / XPander',['7,000–11,500','9,000–14,000','11,000–17,000','13,500–20,000']]]},
-  van:{name:'VANS / GROUP TRANSIT',extra:70,hour:550,local:'25,000–150,000',abroad:'50,000–200,000',rows:[['Daihatsu Hijet / Every Buddy / DFSK 7 Mini / KDH 10–11 Seater / KDH 222–14 Seater',['6,000–15,000','7,000–18,000','8,500–22,000','10,500–26,000']]}
-};
-const packages = [50,100,200,300];
-const routes = [['CMB AIRPORT → KANDY',115],['CMB AIRPORT → COLOMBO',32],['COLOMBO → GALLE',126],['KANDY → ELLA',135],['KANDY → NUWARA ELIYA',77],['SIGIRIYA CULTURAL TRIANGLE',150]];
-
-let selected = vehicles.find(v=>v.id==='kdh');
-let service = 'chauffeur', currency = 'LKR', exploded = false;
-let scene, camera, renderer, vehicleGroup, texturePlane, clock, currentTexture;
-let targetX=0,targetY=0,rotX=0,rotY=0;
-let booted = false;
-
-function formatLKR(v){ return 'LKR '+Math.round(v).toLocaleString('en-LK'); }
-function midpoint(range){ const n=range.replace(/,/g,'').split('–').map(Number); return n.length===2 ? (n[0]+n[1])/2 : n[0]; }
-function rateFor(group, pack){ const i=packages.indexOf(Number(pack)); return i<0 ? null : rates[group].rows[0][1][i]; }
-
-function fallbackData(v){
-  const label = encodeURIComponent(v.name.toUpperCase());
-  const sub = encodeURIComponent(v.className.toUpperCase());
-  return `data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700"><rect width="1200" height="700" fill="%23000000"/><path d="M70 565H1130M130 500L260 390H800L1040 500" fill="none" stroke="%23fef08a" stroke-width="3" opacity=".7"/><path d="M270 390L340 290H740L805 390" fill="none" stroke="%23ffffff" stroke-width="3"/><circle cx="330" cy="505" r="62" fill="none" stroke="%23ffffff" stroke-width="5"/><circle cx="870" cy="505" r="62" fill="none" stroke="%23ffffff" stroke-width="5"/><text x="70" y="100" fill="%23fef08a" font-family="monospace" font-size="30">SUNRISE CABS / FLEET FALLBACK</text><text x="70" y="160" fill="%23ffffff" font-family="Arial" font-size="54" font-weight="900">${label}</text><text x="70" y="205" fill="%23888888" font-family="monospace" font-size="24">[ ${sub} ]</text></svg>`;
-}
-
-function safeImage(img,v){
-  if(!img || img.dataset.fallbackApplied==='1') return;
-  img.dataset.fallbackApplied='1';
-  img.src=fallbackData(v);
-  img.classList.add('asset-fallback');
-  img.removeAttribute('srcset');
-}
-function wireImageFallback(img,v){
-  if(!img) return;
-  img.addEventListener('error',()=>safeImage(img,v),{once:true});
-  img.addEventListener('load',()=>img.classList.remove('asset-fallback'),{passive:true});
-}
-
-function buildRoutes(){
-  const host=$('#routebar'); if(!host) return;
-  host.replaceChildren();
-  routes.forEach(([name,distance])=>{
-    const b=document.createElement('button'); b.className='pill'; b.textContent='[ '+name+' ]';
-    b.onclick=()=>{$('#distance').value=distance;$('#pickup').value=name;updateQuote();document.querySelector('#routes')?.scrollIntoView({behavior:'smooth'});};
-    host.appendChild(b);
-  });
-}
-
-function buildFleetList(){
-  const host=$('#fleetlist'); if(!host) return;
-  host.replaceChildren();
-  vehicles.forEach(v=>{
-    const b=document.createElement('button'); b.className='fleet-item'; b.dataset.vehicle=v.id;
-    b.innerHTML=`<img src="${v.image}" alt="${v.name}" loading="lazy"><span><strong>${v.name}</strong><span>[ ${v.className} ] · ${v.capacity} SEATS</span></span>`;
-    wireImageFallback($('img',b),v);
-    b.onclick=()=>selectVehicle(v.id);
-    host.appendChild(b);
-  });
-}
-
-function buildGallery(){
-  const host=$('#fleetGallery'); if(!host) return;
-  host.replaceChildren();
-  vehicles.forEach((v,i)=>{
-    const f=document.createElement('figure'); f.className='gallery-card'; f.dataset.vehicle=v.id;
-    f.innerHTML=`<img src="${v.image}" alt="${v.name} — Sunrise Cabs Sri Lanka" loading="lazy"><figcaption><div class="mono">[ 0${i+1} / 08 ] · ${v.group.toUpperCase()}</div><div class="vehicle-name">${v.name}</div><div class="vehicle-meta mono">${v.className} · ${v.capacity} SEATS</div></figcaption>`;
-    wireImageFallback($('img',f),v);
-    f.addEventListener('pointerenter',()=>f.classList.add('is-active'));
-    f.addEventListener('pointerleave',()=>f.classList.remove('is-active'));
-    f.addEventListener('click',()=>{selectVehicle(v.id);openLightbox(i);document.querySelector('#fleet')?.scrollIntoView({behavior:'smooth'});});
-    host.appendChild(f);
-  });
-  if('IntersectionObserver' in window){
-    const observer=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('is-active')),{threshold:.35});
-    $$('.gallery-card').forEach(c=>observer.observe(c));
-  }
-}
-
-function openLightbox(i){
-  const v=vehicles[(i+vehicles.length)%vehicles.length], box=$('#lightbox'),img=$('#lightboxImage');
-  if(!box||!img) return;
-  img.dataset.vehicle=v.id; img.src=v.image; img.alt=v.name; wireImageFallback(img,v);
-  $('#lightboxTitle').textContent=v.name; $('#lightboxMeta').textContent=`[ ${v.className.toUpperCase()} ] · [ ${v.capacity} SEATS ]`;
-  box.classList.add('open'); box.setAttribute('aria-hidden','false'); box.dataset.index=String(i);
-}
-function closeLightbox(){ $('#lightbox')?.classList.remove('open'); $('#lightbox')?.setAttribute('aria-hidden','true'); }
-function stepLightbox(d){ openLightbox((Number($('#lightbox')?.dataset.index||0)+d+vehicles.length)%vehicles.length); }
-
-function buildRatesTable(){
-  const host=$('#ratesTable'); if(!host) return;
-  host.innerHTML='<div class="rate-row header"><b>CLASS / VEHICLES</b><b>50 KM</b><b>100 KM</b><b>200 KM</b><b>300 KM</b><b>EXTRA</b></div>';
-  Object.values(rates).forEach(group=>group.rows.forEach(row=>{
-    const el=document.createElement('div'); el.className='rate-row';
-    el.innerHTML=`<b>${row[0]}</b>${row[1].map(x=>`<span>${x}</span>`).join('')}<span>${group.extra} LKR/KM · ${group.hour} LKR/HOUR</span>`;
-    host.appendChild(el);
-  }));
-}
-
-function updateQuote(){
-  const pack=Number($('#pkg')?.value||100),days=Math.max(1,Number($('#days')?.value||1)),distance=Math.max(0,Number($('#distance')?.value||0));
-  const text=rateFor(selected.group,pack),group=rates[selected.group];
-  if(!text){if($('#total'))$('#total').textContent='CONTACT';return;}
-  const base=midpoint(text),extraKm=Math.max(0,distance-pack)*group.extra,serviceFactor=service==='chauffeur'?1.08:1;
-  const total=Math.round((base*days+extraKm+300)*serviceFactor);
-  $('#total').textContent=currency==='LKR'?formatLKR(total):'USD '+Math.round(total/USD_LKR).toLocaleString('en-US');
-  $('#quote').textContent=`[ ${pack} KM/DAY ] [ EXTRA ${group.extra} LKR/KM ] [ ${group.hour} LKR/HOUR ] [ DOC 300 LKR ]`;
-  $('#localDeposit').textContent='DEPOSIT LKR '+group.local;
-  $('#abroadDeposit').textContent='DEPOSIT LKR '+group.abroad;
-  $('#selectedVehicle').textContent=`[ ${selected.name.toUpperCase()} ]`;
-}
-
-function selectVehicle(id){
-  selected=vehicles.find(v=>v.id===id)||selected;
-  $$('.fleet-item').forEach(b=>b.classList.toggle('active',b.dataset.vehicle===selected.id));
-  if($('#class'))$('#class').value=selected.group;
-  if($('#hud'))$('#hud').textContent=`[ ${selected.name.toUpperCase()} ] · [ ${selected.className.toUpperCase()} ]`;
-  updateQuote(); loadVehicleTexture(selected.image,selected); buildVehicleModel();
-}
-
-function createMaterial(color,metalness=.75,roughness=.18){return new THREE.MeshPhysicalMaterial({color,metalness,roughness,clearcoat:.9,clearcoatRoughness:.08});}
-function buildVehicleModel(){
-  if(!vehicleGroup)return;
-  vehicleGroup.clear();
-  const van=selected.id==='kdh';
-  const body=new THREE.Mesh(new THREE.BoxGeometry(van?3.5:3.05,van?1.25:1,van?5:4.4,8,3,8),createMaterial(selected.color,.92,.12)); body.position.y=.9; vehicleGroup.add(body);
-  const cabin=new THREE.Mesh(new THREE.BoxGeometry(van?3:2.55,.78,van?3.1:2.65,8,3,8),createMaterial(0x11151b,.65,.08)); cabin.position.y=1.68; vehicleGroup.add(cabin);
-  const bumper=new THREE.Mesh(new THREE.BoxGeometry(van?3.25:2.9,.28,.35,8,2,4),createMaterial(0x0a0a0a,.8,.2)); bumper.position.set(0,.45,van?2.55:2.2); vehicleGroup.add(bumper);
-  for(const x of[-1.25,1.25])for(const z of[-1.7,1.7]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.3,28),createMaterial(0x080808,.95,.2));wheel.rotation.z=Math.PI/2;wheel.position.set(x,.42,z);vehicleGroup.add(wheel);}
-  if(exploded)vehicleGroup.children.forEach((o,i)=>{if(i)o.position.y+=.13+i*.035;});
-}
-
-function loadVehicleTexture(path,v){
-  if(!texturePlane)return;
-  const loader=new THREE.TextureLoader();
-  loader.load(path,t=>{if(currentTexture)currentTexture.dispose();currentTexture=t;t.colorSpace=THREE.SRGBColorSpace;texturePlane.material.map=t;texturePlane.material.opacity=.24;texturePlane.material.needsUpdate=true;},undefined,()=>{
-    const texture=new THREE.TextureLoader().load(fallbackData(v)); texture.colorSpace=THREE.SRGBColorSpace; texturePlane.material.map=texture; texturePlane.material.opacity=.18; texturePlane.material.needsUpdate=true;
-  });
-}
-
-function initThree(){
-  const mount=$('#stage'); if(!mount) return;
-  try{
-    const rect=mount.getBoundingClientRect(),w=Math.max(1,Math.floor(rect.width)),h=Math.max(1,Math.floor(rect.height));
-    renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75)); renderer.setSize(w,h,false); renderer.setClearColor(0x000000,1); renderer.outputColorSpace=THREE.SRGBColorSpace; mount.prepend(renderer.domElement);
-    scene=new THREE.Scene(); camera=new THREE.PerspectiveCamera(34,w/h,.1,100); camera.position.set(0,1.6,8.2);
-    scene.add(new THREE.HemisphereLight(0x312e81,0x000000,1.7)); const key=new THREE.SpotLight(0xffffff,9,40,Math.PI/5,.45,1.4); key.position.set(4,8,6); scene.add(key); const rim=new THREE.DirectionalLight(0xc084fc,5); rim.position.set(-5,4,-6); scene.add(rim);
-    vehicleGroup=new THREE.Group(); scene.add(vehicleGroup);
-    texturePlane=new THREE.Mesh(new THREE.PlaneGeometry(4.8,3),new THREE.MeshBasicMaterial({transparent:true,opacity:.18,side:THREE.DoubleSide})); texturePlane.position.set(0,2.7,-2.3); scene.add(texturePlane);
-    buildVehicleModel(); loadVehicleTexture(selected.image,selected); clock=new THREE.Clock();
-    const resize=()=>{const r=mount.getBoundingClientRect(),nw=Math.max(1,Math.floor(r.width)),nh=Math.max(1,Math.floor(r.height));camera.aspect=nw/nh;camera.updateProjectionMatrix();renderer.setSize(nw,nh,false);};
-    if('ResizeObserver' in window)new ResizeObserver(resize).observe(mount); else addEventListener('resize',resize,{passive:true});
-    const move=(x,y)=>{targetX=(x/innerWidth-.5)*1.2;targetY=-(y/innerHeight-.5)*.7;};
-    addEventListener('pointermove',e=>move(e.clientX,e.clientY),{passive:true}); addEventListener('touchmove',e=>e.touches[0]&&move(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
-    const animate=()=>{requestAnimationFrame(animate);const t=clock.getElapsedTime();rotY+=(targetX-rotY)*.045;rotX+=(targetY-rotX)*.045;vehicleGroup.rotation.y+=.003+rotY*.006;vehicleGroup.rotation.x=rotX*.35;vehicleGroup.position.y=Math.sin(t*1.2)*.07;texturePlane.rotation.y=Math.sin(t*.35)*.05;renderer.render(scene,camera);};
-    animate();
-  }catch(e){console.warn('WebGL fallback',e);if($('#hud'))$('#hud').textContent='[ WEBGL_FALLBACK :: FLEET_UI_ACTIVE ]';}
-}
-
-function initBackground(){
-  const canvas=$('#bg'); if(!canvas)return; const ctx=canvas.getContext('2d'); if(!ctx)return;
-  let w=0,h=0; const resize=()=>{const d=Math.min(devicePixelRatio||1,1.5);w=canvas.width=innerWidth*d;h=canvas.height=innerHeight*d;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';}; resize(); addEventListener('resize',resize,{passive:true});
-  const draw=()=>{ctx.clearRect(0,0,w,h);requestAnimationFrame(draw);}; draw();
-}
-
-function initBooking(){
-  $('#class')?.addEventListener('change',e=>{const v=vehicles.find(x=>x.group===e.target.value);if(v)selectVehicle(v.id);else updateQuote();});
-  ['pkg','days','distance'].forEach(id=>$('#'+id)?.addEventListener('input',updateQuote));
-  $('#chauffeur')?.addEventListener('click',()=>{service='chauffeur';$('#chauffeur').classList.add('active');$('#selfdrive').classList.remove('active');updateQuote();});
-  $('#selfdrive')?.addEventListener('click',()=>{service='selfdrive';$('#selfdrive').classList.add('active');$('#chauffeur').classList.remove('active');updateQuote();});
-  $('#lkr')?.addEventListener('click',()=>{currency='LKR';$('#lkr').classList.add('active');$('#usd').classList.remove('active');updateQuote();});
-  $('#usd')?.addEventListener('click',()=>{currency='USD';$('#usd').classList.add('active');$('#lkr').classList.remove('active');updateQuote();});
-  $('#dispatch')?.addEventListener('click',()=>{
-    updateQuote();
-    const message=['SUNRISE CABS BOOKING INQUIRY','',`[ VEHICLE ] ${selected.name}`,`[ CLASS ] ${selected.className}`,`[ SERVICE ] ${service==='chauffeur'?'WITH CHAUFFEUR':'SELF DRIVE'}`,`[ PACKAGE ] ${$('#pkg')?.value} KM/DAY`,`[ DURATION ] ${$('#days')?.value} DAY(S)`,`[ ROUTE / PICKUP ] ${$('#pickup')?.value||'Not specified'}`,`[ PASSENGERS ] ${$('#passengers')?.value||'Not specified'}`,`[ CUSTOMER ] ${$('#name')?.value||'Not specified'}`,`[ FLIGHT / DATE ] ${$('#date')?.value||'Not specified'}`,`[ QUOTE ] ${$('#total')?.textContent||'CONTACT'}`,`[ NOTES ] ${$('#notes')?.value||'None'}`].join('\n');
-    window.open(`${WHATSAPP}?text=${encodeURIComponent(message)}`,'_blank','noopener');
-  });
-}
-
-function initNavigation(){
-  $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{document.querySelector('#'+b.dataset.go)?.scrollIntoView({behavior:'smooth'});$('#sheet')?.classList.remove('open');}));
-  $('#menu')?.addEventListener('click',()=>$('#sheet')?.classList.toggle('open'));
-  $('#explode')?.addEventListener('click',()=>{exploded=!exploded;$('#explode').classList.toggle('active',exploded);buildVehicleModel();});
-  $('#lbClose')?.addEventListener('click',closeLightbox); $('#lbPrev')?.addEventListener('click',()=>stepLightbox(-1)); $('#lbNext')?.addEventListener('click',()=>stepLightbox(1));
-  $('#lightbox')?.addEventListener('click',e=>{if(e.target.id==='lightbox')closeLightbox();});
-  addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();if($('#lightbox')?.classList.contains('open')){if(e.key==='ArrowLeft')stepLightbox(-1);if(e.key==='ArrowRight')stepLightbox(1);}});
-  const cursor=$('#cursor'); if(cursor)addEventListener('pointermove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';},{passive:true});
-}
-
-function boot(){
-  if(booted)return; booted=true;
-  buildRoutes(); buildFleetList(); buildGallery(); buildRatesTable(); initBooking(); initNavigation(); initBackground(); updateQuote();
-  requestAnimationFrame(()=>requestAnimationFrame(initThree));
-}
-
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
+const WA='https://wa.me/94776380753',USD_LKR=305,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const vehicles=[
+{id:'magnite',name:'Nissan Magnite',group:'suv',className:'Compact SUV',capacity:5,color:0xd8d8d8,image:'assets/fleet/magnite.jpg'},
+{id:'yaris-cross',name:'Toyota Yaris Cross',group:'suv',className:'Hybrid SUV',capacity:5,color:0xe6e6e6,image:'assets/fleet/yaris-cross.jpg'},
+{id:'alto',name:'Suzuki Alto',group:'small',className:'Economy City',capacity:4,color:0xf1f1f1,image:'assets/fleet/alto.jpg'},
+{id:'axio',name:'Toyota Axio',group:'sedan',className:'Executive Sedan',capacity:5,color:0xd9d9d9,image:'assets/fleet/axio.jpg'},
+{id:'prius',name:'Toyota Prius',group:'sedan',className:'Hybrid Elite',capacity:5,color:0xe7e7e7,image:'assets/fleet/prius.jpg'},
+{id:'vitz',name:'Toyota Vitz',group:'hatch',className:'Urban Compact',capacity:5,color:0xc8c8c8,image:'assets/fleet/vitz.jpg'},
+{id:'kdh',name:'Toyota KDH High Roof',group:'van',className:'Group Transit Van',capacity:11,color:0xe4e4e4,image:'assets/fleet/kdh.jpg'},
+{id:'xpander',name:'Mitsubishi Xpander',group:'suv',className:'7-Seater MPV',capacity:7,color:0xc5c5c5,image:'assets/fleet/xpander.jpg'}];
+const rates={small:{extra:40,hour:300,local:'20,000–50,000',abroad:'50,000–100,000',rows:[['Alto K / Alto C / Alto Auto',['3,000–5,000','4,000–6,000','5,500–7,500','7,500–9,500']],['Passo / Wagon R',['6,000–7,500','7,000–8,500','8,500–10,000','10,500–12,000']]]},hatch:{extra:50,hour:500,local:'30,000–40,000',abroad:'60,000–80,000',rows:[['Vitz / Nissan Leaf / Aqua / Vitz New / GP5 / Yaris',['6,500–7,500','8,500–9,000','10,500–11,500','13,000–14,500']]]},sedan:{extra:55,hour:500,local:'40,000',abroad:'80,000',rows:[['Insight / Shuttle / Prius / Premio / Axio Hybrid',['7,000–9,000','8,500–11,000','10,500–13,500','13,000–16,500']]]},suv:{extra:90,hour:1000,local:'30,000–150,000',abroad:'60,000–200,000',rows:[['Magnite / Vezel / Raize / CHR / Yaris Cross / VEZEL RS / Outlander / DFSK 580 / XPander',['7,000–11,500','9,000–14,000','11,000–17,000','13,500–20,000']]]},van:{extra:70,hour:550,local:'25,000–150,000',abroad:'50,000–200,000',rows:[['Daihatsu Hijet / Every Buddy / DFSK 7 Mini / KDH 10–11 Seater / KDH 222–14 Seater',['6,000–15,000','7,000–18,000','8,500–22,000','10,500–26,000']]]}};
+const packs=[50,100,200,300],routes=[['CMB AIRPORT → KANDY',115],['CMB AIRPORT → COLOMBO',32],['COLOMBO → GALLE',126],['KANDY → ELLA',135],['KANDY → NUWARA ELIYA',77],['SIGIRIYA CULTURAL TRIANGLE',150]];
+const state={vehicle:vehicles[6],service:'chauffeur',currency:'LKR',days:1,pack:100,distance:115,hours:0,gallery:0,exploded:false};
+let renderer,scene,camera,vehicleRoot,photoPlane,photoTexture,resizeObserver,raf=0,pixelRatio=1,slow=0,last=0;
+const pointer={x:0,y:0,tx:0,ty:0,vx:0,vy:0},touch={down:false,lx:0,ly:0};
+const text=(id,v)=>{const e=$(id);if(e)e.textContent=v},mid=s=>{const n=s.replace(/,/g,'').split('–').map(Number);return n.length===2?(n[0]+n[1])/2:n[0]};
+function estimate(){const r=rates[state.vehicle.group],range=r.rows[0][1][packs.indexOf(state.pack)];if(!range)return 0;const base=mid(range)*state.days,km=Math.max(0,state.distance-state.pack*state.days)*r.extra,h=Math.max(0,state.hours)*r.hour,driver=state.service==='chauffeur'?base*.08:0;return Math.round(base+km+h+300+driver)}
+function fallback(v){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700"><rect width="1200" height="700" fill="#050505"/><path d="M90 530h1020M160 470l150-100h500l230 100M320 370l70-95h420l70 95" fill="none" stroke="#fff" stroke-width="5"/><circle cx="335" cy="495" r="62" fill="#050505" stroke="#fff" stroke-width="5"/><circle cx="865" cy="495" r="62" fill="#050505" stroke="#fff" stroke-width="5"/><text x="70" y="100" fill="#fef08a" font-family="monospace" font-size="28">SUNRISE / FLEET ARCHIVE</text><text x="70" y="165" fill="#fff" font-family="Arial" font-size="55" font-weight="900">${v.name.toUpperCase()}</text><text x="70" y="210" fill="#777" font-family="monospace" font-size="22">[ ${v.className.toUpperCase()} ] · [ ${v.capacity} SEATS ]</text></svg>`)}
+function safeImg(img,v){img.addEventListener('error',()=>{if(img.dataset.f)return;img.dataset.f='1';img.src=fallback(v)},{once:true})}
+function quote(){state.pack=+$('#packageKm').value;state.days=Math.max(1,+$('#days').value||1);state.distance=Math.max(0,+$('#distance').value||0);state.hours=Math.max(0,+$('#extraHours').value||0);const total=estimate(),r=rates[state.vehicle.group];text('#quoteTotal',state.currency==='LKR'?`LKR ${total.toLocaleString('en-LK')}`:`USD ${Math.round(total/USD_LKR).toLocaleString()}`);text('#quoteMeta',`[ ${state.pack} KM/DAY ] [ ${r.extra} LKR/KM EXTRA ] [ ${r.hour} LKR/HOUR ] [ DOC 300 LKR ]`);text('#depositLocal','LKR '+r.local);text('#depositAbroad','LKR '+r.abroad);text('#selectedVehicle','[ '+state.vehicle.name.toUpperCase()+' ]')}
+function selectVehicle(id){const v=vehicles.find(x=>x.id===id);if(!v)return;state.vehicle=v;$('#vehicleSelect').value=id;$$('.fleet-card').forEach(x=>x.classList.toggle('selected',x.dataset.id===id));text('#showroomVehicle',v.name.toUpperCase());text('#showroomClass',v.className.toUpperCase());text('#showroomSeats',v.capacity+' SEATS');text('#calculatorVehicle',v.name.toUpperCase());text('#calculatorClass',v.className.toUpperCase());quote();buildModel();loadPhoto(v)}
+function buildRoutes(){const h=$('#routePresets');routes.forEach(([name,km],i)=>{const b=document.createElement('button');b.className='route-chip'+(i?'':' active');b.innerHTML=`<span>0${i+1}</span><strong>${name}</strong><em>${km} KM*</em>`;b.onclick=()=>{$('#distance').value=km;$('#pickup').value=name;$$('.route-chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');quote()};h.appendChild(b)})}
+function buildFleet(){const h=$('#fleetCards');vehicles.forEach((v,i)=>{const b=document.createElement('button');b.className='fleet-card';b.dataset.id=v.id;b.innerHTML=`<div class="fleet-image"><img src="${v.image}" alt="${v.name}" loading="lazy"><span class="image-index mono">0${i+1}</span></div><div class="fleet-card-body"><div class="mono">[ ${v.className} ]</div><h3>${v.name}</h3><div class="fleet-meta"><span>${v.capacity} PASSENGERS</span><span>SELECT →</span></div></div>`;safeImg($('img',b),v);b.onclick=()=>selectVehicle(v.id);h.appendChild(b)});selectVehicle(state.vehicle.id)}
+function buildGallery(){const h=$('#galleryGrid');vehicles.forEach((v,i)=>{const f=document.createElement('figure');f.className='archive-card';f.innerHTML=`<div class="archive-media"><img src="${v.image}" alt="${v.name} — Sunrise Cabs" loading="lazy"><div class="archive-scan"></div><div class="archive-label mono">[ 0${i+1} / 08 ] · ${v.group}</div></div><figcaption><div><h3>${v.name}</h3><p class="mono">${v.className} · ${v.capacity} SEATS</p></div><span class="archive-arrow">↗</span></figcaption>`;safeImg($('img',f),v);f.onclick=()=>openLightbox(i);h.appendChild(f)});if('IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('in-view')),{threshold:.35});$$('.archive-card').forEach(x=>io.observe(x))}}
+function buildRates(){const h=$('#rateRows');Object.values(rates).forEach(r=>r.rows.forEach(row=>{const e=document.createElement('div');e.className='rate-row';e.innerHTML=`<div class="rate-name"><span class="mono">[ RATE CLASS ]</span><strong>${row[0]}</strong></div>${row[1].map(x=>`<span>${x}</span>`).join('')}<span>${r.extra} LKR/KM<br>${r.hour} LKR/HOUR</span>`;h.appendChild(e)}))}
+function buildModel(){if(!vehicleRoot)return;vehicleRoot.clear();const v=state.vehicle,van=v.id==='kdh',mpv=v.id==='xpander',w=van?3.5:mpv?3.2:3.05,l=van?5:mpv?4.5:['alto','vitz'].includes(v.id)?4.05:4.4,h=van?1.35:1,mat=new THREE.MeshPhysicalMaterial({color:v.color,metalness:.9,roughness:.14,clearcoat:1,clearcoatRoughness:.05});const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,l,12,5,16),mat);body.position.y=.9;vehicleRoot.add(body);const glass=new THREE.Mesh(new THREE.BoxGeometry(w*.84,.72,l*.55,10,4,12),new THREE.MeshPhysicalMaterial({color:0x10151a,metalness:.45,roughness:.08,clearcoat:1,transmission:.03}));glass.position.y=1.7;vehicleRoot.add(glass);for(const x of[-w*.38,w*.38])for(const z of[-l*.34,l*.34]){const tire=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.32,28),new THREE.MeshStandardMaterial({color:0x050505,roughness:.3,metalness:.4}));tire.rotation.z=Math.PI/2;tire.position.set(x,.42,z);vehicleRoot.add(tire);const rim=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.34,20),new THREE.MeshStandardMaterial({color:0xaaaaaa,metalness:1,roughness:.15}));rim.rotation.z=Math.PI/2;rim.position.set(x,.42,z);vehicleRoot.add(rim)}const lm=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfef08a,emissiveIntensity:2});for(const x of[-w*.26,w*.26]){const light=new THREE.Mesh(new THREE.BoxGeometry(w*.18,.12,.07),lm);light.position.set(x,1.03,l*.515);vehicleRoot.add(light)}if(state.exploded)vehicleRoot.children.forEach((o,i)=>o.position.y+=i*.045)}
+const vShader=`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.0);}`;
+const fShader=`precision highp float;varying vec2 vUv;uniform float uTime;uniform vec2 uPointer;float hash(vec3 p){p=fract(p*.3183+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float n(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}void main(){vec2 uv=vUv-.5;uv.x*=1.6;float t=uTime*.06,field=0.;for(int i=0;i<5;i++){float fi=float(i);vec2 c=.32*vec2(sin(t*(.5+fi*.1)+fi*1.7),cos(t*(.4+fi*.08)+fi));field+=smoothstep(.28,.0,length(uv-c+.08*n(vec3(uv*2.,t+fi))));}float glow=smoothstep(.8,0.,length(uv))*.12;float v=clamp(field*.04+glow,0.,.12);gl_FragColor=vec4(vec3(v),1.);}`;
+function initBackground(){const c=$('#bgCanvas'),s=new THREE.Scene(),cam=new THREE.Camera(),r=new THREE.WebGLRenderer({canvas:c,antialias:false,powerPreference:'high-performance'}),m=new THREE.ShaderMaterial({vertexShader:vShader,fragmentShader:fShader,uniforms:{uTime:{value:0},uPointer:{value:new THREE.Vector2()}}});s.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),m));r.setPixelRatio(1);const resize=()=>r.setSize(innerWidth,innerHeight,false);resize();addEventListener('resize',resize,{passive:true});const loop=t=>{m.uniforms.uTime.value=t*.001;m.uniforms.uPointer.value.lerp(new THREE.Vector2(pointer.x,pointer.y),.05);r.render(s,cam);requestAnimationFrame(loop)};requestAnimationFrame(loop)}
+function loadPhoto(v){if(!photoPlane)return;new THREE.TextureLoader().load(v.image,t=>{if(photoTexture)photoTexture.dispose();photoTexture=t;t.colorSpace=THREE.SRGBColorSpace;photoPlane.material.map=t;photoPlane.material.needsUpdate=true},undefined,()=>{photoPlane.material.map=new THREE.TextureLoader().load(fallback(v));photoPlane.material.needsUpdate=true})}
+function initShowroom(){const mount=$('#showroom'),r=mount.getBoundingClientRect();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});pixelRatio=Math.min(devicePixelRatio||1,1.5);renderer.setPixelRatio(pixelRatio);renderer.setSize(r.width,r.height,false);renderer.setClearColor(0x000000,1);renderer.outputColorSpace=THREE.SRGBColorSpace;mount.appendChild(renderer.domElement);scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(36,r.width/r.height,.1,100);camera.position.set(0,2.1,8.8);scene.add(new THREE.AmbientLight(0xffffff,.6));const key=new THREE.DirectionalLight(0xffffff,5);key.position.set(4,7,6);scene.add(key);const gold=new THREE.PointLight(0xfef08a,18,18,2);gold.position.set(-4,2,-3);scene.add(gold);vehicleRoot=new THREE.Group();scene.add(vehicleRoot);buildModel();photoPlane=new THREE.Mesh(new THREE.PlaneGeometry(4.8,2.8),new THREE.MeshBasicMaterial({transparent:true,opacity:.12,side:THREE.DoubleSide}));photoPlane.position.set(0,3,-2.3);scene.add(photoPlane);loadPhoto(state.vehicle);const rock=new THREE.Mesh(new THREE.IcosahedronGeometry(2.2,4),new THREE.MeshStandardMaterial({color:0x102617,roughness:.9}));rock.position.set(-4.2,2.4,-3.5);scene.add(rock);resizeObserver=new ResizeObserver(()=>{const x=mount.getBoundingClientRect();if(x.width&&x.height){camera.aspect=x.width/x.height;camera.updateProjectionMatrix();renderer.setSize(x.width,x.height,false)}});resizeObserver.observe(mount);const loop=t=>{const d=Math.min(.05,(t-last)/1000||.016);last=t;if(d>.0166)slow++;else slow=Math.max(0,slow-2);if(slow>=45&&pixelRatio>1){pixelRatio=Math.max(1,pixelRatio-.25);renderer.setPixelRatio(pixelRatio);slow=0;text('#tier','TIER-2 ADAPTIVE')}text('#fps',Math.round(1/Math.max(d,.001))+' FPS');pointer.x+=(pointer.tx-pointer.x)*.08;pointer.y+=(pointer.ty-pointer.y)*.08;touch.vx*=.94;touch.vy*=.94;vehicleRoot.rotation.y+=(pointer.x*.4+touch.vx*.025-vehicleRoot.rotation.y)*.06;vehicleRoot.rotation.x+=(pointer.y*.16-vehicleRoot.rotation.x)*.06;vehicleRoot.position.y=Math.sin(t*.001)*.07;rock.rotation.x+=d*.07;rock.rotation.y+=d*.1;rock.position.y=2.4+Math.sin(t*.0008)*.22;renderer.render(scene,camera);raf=requestAnimationFrame(loop)};raf=requestAnimationFrame(loop);mount.onpointermove=e=>{const q=mount.getBoundingClientRect();pointer.tx=(e.clientX-q.left)/q.width*2-1;pointer.ty=-((e.clientY-q.top)/q.height*2-1);if(touch.down){touch.vx=e.clientX-touch.lx;touch.vy=e.clientY-touch.ly;touch.lx=e.clientX;touch.ly=e.clientY}};mount.onpointerdown=e=>{touch.down=true;touch.lx=e.clientX;touch.ly=e.clientY};addEventListener('pointerup',()=>touch.down=false)}
+function viewport(){const set=()=>document.documentElement.style.setProperty('--vh',(visualViewport?.height||innerHeight)+'px');set();visualViewport?.addEventListener('resize',set);new ResizeObserver(set).observe(document.documentElement)}
+function nav(){$$('[data-go]').forEach(b=>b.onclick=()=>{document.getElementById(b.dataset.go)?.scrollIntoView({behavior:'smooth'});$('#mobileSheet')?.classList.remove('open')});$('#menuButton').onclick=()=>$('#mobileSheet').classList.toggle('open')}
+function calculator(){const vs=$('#vehicleSelect');vehicles.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.name;vs.appendChild(o)});vs.value=state.vehicle.id;['distance','days','packageKm','extraHours'].forEach(id=>$('#'+id).addEventListener('input',quote));vs.onchange=e=>selectVehicle(e.target.value);$$('#serviceToggle button').forEach(b=>b.onclick=()=>{state.service=b.dataset.value;$$('#serviceToggle button').forEach(x=>x.classList.toggle('active',x===b));quote()});$$('#currencyToggle button').forEach(b=>b.onclick=()=>{state.currency=b.dataset.value;$$('#currencyToggle button').forEach(x=>x.classList.toggle('active',x===b));quote()});$('#chauffeurInfo').onclick=()=>$('#serviceInfo').classList.add('open');$('#closeServiceInfo').onclick=()=>$('#serviceInfo').classList.remove('open');$('#explode').onclick=()=>{state.exploded=!state.exploded;$('#explode').classList.toggle('active',state.exploded);buildModel()}}
+function dispatch(){const total=estimate(),msg=`SUNRISE CABS — BOOKING INQUIRY\n\nName: ${$('#name').value||'Not provided'}\nTravel date / flight: ${$('#date').value||'Not provided'}\nVehicle: ${state.vehicle.name}\nClass: ${state.vehicle.className}\nPassengers: ${$('#passengers').value||2}\nService: ${state.service==='chauffeur'?'With chauffeur':'Self-drive'}\nRoute: ${$('#pickup').value||'Not provided'}\nDays: ${state.days}\nPackage: ${state.pack} km/day\nDistance: ${state.distance} km\nExtra hours: ${state.hours}\nEstimated total: ${state.currency==='LKR'?`LKR ${total.toLocaleString('en-LK')}`:`USD ${Math.round(total/USD_LKR)}`}\nNotes: ${$('#notes').value||'None'}\n\nPlease confirm availability and final quotation.`;window.open(WA+'?text='+encodeURIComponent(msg),'_blank','noopener')}
+let audio;function chime(f=620){try{audio??=new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.6,t+.18);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.04,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.25);o.connect(g).connect(audio.destination);o.start();o.stop(t+.26)}catch{}}
+function openLightbox(i){state.gallery=(i+vehicles.length)%vehicles.length;const v=vehicles[state.gallery],box=$('#lightbox'),img=$('#lightboxImage');img.src=v.image;safeImg(img,v);$('#lightboxTitle').textContent=v.name;$('#lightboxMeta').textContent=`[ ${v.className.toUpperCase()} ] · [ ${v.capacity} SEATS ] · [ SRI LANKA ]`;box.classList.add('open');box.setAttribute('aria-hidden','false');chime(880)}
+function setupLightbox(){$('#lbClose').onclick=()=>{$('#lightbox').classList.remove('open');$('#lightbox').setAttribute('aria-hidden','true')};$('#lbPrev').onclick=()=>openLightbox(state.gallery-1);$('#lbNext').onclick=()=>openLightbox(state.gallery+1);$('#lightbox').onclick=e=>{if(e.target.id==='lightbox')$('#lbClose').click()};addEventListener('keydown',e=>{if(e.key==='Escape')$('#lbClose').click();if(e.key==='ArrowLeft')openLightbox(state.gallery-1);if(e.key==='ArrowRight')openLightbox(state.gallery+1)})}
+function cursor(){const c=$('#cursor');if(matchMedia('(pointer:coarse)').matches){c.remove();return}let x=0,y=0,tx=0,ty=0;addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY});const loop=()=>{x+=(tx-x)*.18;y+=(ty-y)*.18;c.style.transform=`translate(${x}px,${y}px) translate(-50%,-50%)`;requestAnimationFrame(loop)};loop()}
+function scrollFx(){if(window.Lenis&&window.gsap){const lenis=new Lenis({duration:1.1,smoothWheel:true,smoothTouch:false}),r=t=>{lenis.raf(t);requestAnimationFrame(r)};requestAnimationFrame(r);gsap.registerPlugin(ScrollTrigger);gsap.utils.toArray('.reveal').forEach(e=>gsap.fromTo(e,{y:60,opacity:0},{y:0,opacity:1,duration:1,ease:'power4.out',scrollTrigger:{trigger:e,start:'top 88%'}}));gsap.to('#heroTitle',{yPercent:-12,scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:true}});ScrollTrigger.refresh()}}
+function cleanup(){cancelAnimationFrame(raf);resizeObserver?.disconnect();photoTexture?.dispose();scene?.traverse(o=>{o.geometry?.dispose();if(o.material){const m=Array.isArray(o.material)?o.material:[o.material];m.forEach(x=>x.dispose())}});renderer?.dispose()}
+addEventListener('beforeunload',cleanup);document.addEventListener('DOMContentLoaded',()=>{viewport();nav();buildRoutes();buildFleet();buildGallery();buildRates();calculator();quote();setupLightbox();cursor();$('#dispatch').onclick=dispatch;addEventListener('pointerdown',()=>{try{audio??=new(window.AudioContext||window.webkitAudioContext)()}catch{}},{once:true});initBackground();initShowroom();scrollFx()});
