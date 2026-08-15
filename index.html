@@ -4,105 +4,34 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<meta name="description" content="Sunrise Cabs & Rent a Car — Kandy, Sri Lanka. Fleet rental, chauffeur service, airport transfers and island-wide travel.">
-<title>SUNRISE CABS — SRI LANKA</title>
+<meta name="description" content="Sunrise Cabs & Rent a Car — Kandy, Sri Lanka. Premium self-drive, chauffeur hire, airport transfers and island-wide journeys.">
+<title>SUNRISE CABS — KANDY / SRI LANKA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.8/dist/lenis.min.js"></script>
 </head>
 <body>
-<canvas id="bg" class="site-canvas" aria-hidden="true"></canvas>
-<header class="site-header">
-  <div class="brand mono">SUNRISE CABS<br>KANDY_HQ<br>[ 24/7_DISPATCH ]</div>
-  <nav class="nav">
-    <button class="pill" data-go="routes">[ ROUTES ]</button>
-    <button class="pill" data-go="fleet">[ FLEET ]</button>
-    <button class="pill" data-go="gallery">[ ARCHIVE ]</button>
-    <button class="pill" data-go="rates">[ RATES ]</button>
-    <button class="pill" data-go="book">[ WHATSAPP ]</button>
-  </nav>
-  <button class="pill mobile-menu" id="menu" aria-label="Open menu">[ MENU ]</button>
-</header>
-<div class="sheet" id="sheet">
-  <button data-go="routes">[ ROUTES ]</button>
-  <button data-go="fleet">[ FLEET ]</button>
-  <button data-go="gallery">[ ARCHIVE ]</button>
-  <button data-go="rates">[ RATES ]</button>
-  <button data-go="book">[ WHATSAPP ]</button>
-</div>
+<canvas id="bgCanvas" aria-hidden="true"></canvas><div class="grain" aria-hidden="true"></div>
+<header class="header"><a class="brand" href="#hero" data-go="hero"><span>SUNRISE</span><span>CABS</span><small class="mono">[ KANDY_HQ ] [ 24/7 ]</small></a><nav class="desktop-nav" aria-label="Primary"><button data-go="fleet">[ FLEET ]</button><button data-go="routes">[ ROUTES ]</button><button data-go="archive">[ ARCHIVE ]</button><button data-go="calculator">[ RATES ]</button><button data-go="book">[ WHATSAPP ]</button></nav><button class="menu-button" id="menuButton">[ MENU ]</button></header>
+<div class="mobile-sheet" id="mobileSheet"><div class="sheet-inner"><div class="mono">[ NAVIGATION_MATRIX ]</div><button data-go="fleet">FLEET ↗</button><button data-go="routes">ROUTES ↗</button><button data-go="archive">ARCHIVE ↗</button><button data-go="calculator">RATES ↗</button><button data-go="book">WHATSAPP ↗</button></div></div>
 <main>
-<section class="hero">
-  <div>
-    <div class="mono hero-kicker">[ KANDY_HQ :: 24/7_DISPATCH ] [ CMB_AIRPORT_HUB ] [ +94 77 638 0753 ]</div>
-    <h1>SUNRISE<br><span class="gold">CABS</span><small>RENT A CAR · CHAUFFEUR · ISLAND-WIDE</small></h1>
-    <p class="hero-copy">A cinematic Sri Lankan mobility platform connecting a live rental matrix, interactive fleet showroom, editorial vehicle archive and direct WhatsApp dispatch.</p>
-    <button class="primary" data-go="book">BUILD LIVE QUOTE →</button>
-  </div>
-</section>
-<section class="section" id="routes">
-  <div class="section-head"><h2>ROUTE<br><span class="gold">KERNEL.</span></h2><div class="mono">[ DISTANCE_MATRIX ]<br>[ SELECT VECTOR → CALCULATE ]</div></div>
-  <div class="routebar" id="routebar"></div>
-  <div class="panel">
-    <div class="form-grid">
-      <div class="field"><label class="mono">ROUTE DISTANCE / KM</label><input id="distance" type="number" min="0" value="115"></div>
-      <div class="field"><label class="mono">DAYS</label><input id="days" type="number" min="1" value="1"></div>
-      <div class="field"><label class="mono">MILEAGE PACKAGE</label><select id="pkg"><option>50</option><option selected>100</option><option>200</option><option>300</option></select></div>
-      <div class="field"><label class="mono">VEHICLE CLASS</label><select id="class"><option value="small">SMALL / COMPACT</option><option value="hatch">HATCH / MINI SUV</option><option value="sedan">SEDAN / HYBRID</option><option value="suv">SUV</option><option value="van" selected>VAN / GROUP</option></select></div>
-      <div class="field"><label class="mono">SERVICE</label><div class="switches"><button class="pill active" id="chauffeur">[ WITH_CHAUFFEUR ]</button><button class="pill" id="selfdrive">[ SELF_DRIVE ]</button></div></div>
-      <div class="field"><label class="mono">CURRENCY</label><div class="switches"><button class="pill active" id="lkr">LKR</button><button class="pill" id="usd">USD</button></div></div>
-      <div class="field wide"><label class="mono">PICKUP / DROP-OFF</label><input id="pickup" value="Kandy City Centre → Bandaranaike International Airport (CMB)"></div>
-    </div>
-    <div class="quote-row"><div><div class="mono">[ LIVE_QUOTE · SELECTED_FLEET ]</div><div class="total" id="total">LKR —</div><div class="mono gold" id="selectedVehicle">[ KDH HIGH ROOF ]</div></div><div class="quote-meta mono" id="quote">[ EXTRA_KM · DOCUMENT · DEPOSIT ]</div></div>
-    <div class="deposit-grid"><div class="deposit"><b>[ LOCAL ]</b><br><span class="mono" id="localDeposit">DEPOSIT —</span></div><div class="deposit"><b>[ ABROAD ]</b><br><span class="mono" id="abroadDeposit">DEPOSIT —</span></div></div>
-  </div>
-</section>
-<section class="section" id="fleet">
-  <div class="section-head"><h2>3D<br><span class="gold">SHOWROOM.</span></h2><div class="mono">[ PROCEDURAL_FLEET ]<br>[ TEXTURE_SYNC ] [ WEBGL_ACTIVE ]</div></div>
-  <div class="fleet-layout">
-    <div class="showroom" id="stage"><div class="showroom-hud"><div class="mono" id="hud">[ KDH HIGH ROOF ]</div><button class="pill" id="explode">[ EXPLODED_VIEW ]</button></div></div>
-    <div class="fleet-list" id="fleetlist"></div>
-  </div>
-</section>
-<section class="section" id="gallery">
-  <div class="section-head"><h2>FLEET<br><span class="gold">ARCHIVE.</span></h2><div class="mono">[ LOCAL_ASSET_PIPELINE ]<br>[ ASSETS/FLEET/*.JPG ]<br>[ MONOCHROME → COLOR ]</div></div>
-  <div class="gallery" id="fleetGallery"></div>
-</section>
-<section class="section" id="rates">
-  <div class="section-head"><h2>MASTER<br><span class="gold">MATRIX.</span></h2><div class="mono">[ 24H_DAY ] [ LKR ]<br>[ SUPPLIED_SCHEDULE ]</div></div>
-  <div class="rate-table" id="ratesTable"></div>
-  <p class="mono" style="color:#666;margin-top:16px">[ NOTE ] 20–29 and 30+ day exact base figures were not numerically supplied for every class. The calculator does not fabricate those base figures; explicit extra-km, extra-hour, deposit and LKR 300 document rules remain visible.</p>
-</section>
-<section class="section" id="reviews">
-  <div class="section-head"><h2>SOCIAL<br><span class="gold">PROOF.</span></h2><div class="mono">[ PROVIDED_TESTIMONIALS ]</div></div>
-  <div class="reviews">
-    <article class="review"><span class="mono gold">[ WHATSAPP ]</span><p>“Best rent a car service in Kandy! Rented the Toyota KDH High Roof for our Sigiriya and Ella round tour. Impeccable condition, very clean interior, and the driver was extremely professional and punctual. 10/10!”</p><span class="mono">— DINUKA P. / COLOMBO · TOURIST GROUP</span></article>
-    <article class="review"><span class="mono gold">[ FACEBOOK ]</span><p>“Needed an emergency airport drop to Bandaranaike International Airport (CMB) at 3:00 AM. Sunrise Cabs dispatched an Axio hybrid instantly. Great rates, transparent mileage calculation, and zero hidden fees. Highly recommended!”</p><span class="mono">— AZEEM R. / CORPORATE CLIENT</span></article>
-    <article class="review"><span class="mono gold">[ WHATSAPP ]</span><p>“Transparent deposit policy and amazing fleet options. Taking the Vezel RS for a 14-day island tour was the best decision. WhatsApp booking made communication effortless.”</p><span class="mono">— SARAH M. / INTERNATIONAL TRAVELER</span></article>
-  </div>
-</section>
-<section class="section" id="book">
-  <div class="section-head"><h2>DIRECT<br><span class="gold">DISPATCH.</span></h2><div class="mono">[ WHATSAPP_ENGINE ]<br>[ +94 77 638 0753 ]</div></div>
-  <div class="panel">
-    <div class="form-grid">
-      <div class="field"><label class="mono">NAME</label><input id="name" placeholder="Your name"></div>
-      <div class="field"><label class="mono">FLIGHT / DATE</label><input id="date" placeholder="CMB flight or travel date"></div>
-      <div class="field"><label class="mono">PASSENGERS</label><input id="passengers" type="number" min="1" value="2"></div>
-      <div class="field wide"><label class="mono">NOTES</label><input id="notes" placeholder="Luggage, pickup time, route details..."></div>
-    </div>
-    <div style="margin-top:18px"><button class="primary" id="dispatch">DISPATCH QUOTE VIA WHATSAPP →</button></div>
-  </div>
-</section>
+<section class="hero" id="hero"><div class="hero-grid"><div class="hero-topline mono">[ KANDY_HQ :: 24/7_DISPATCH ] <span>[ CMB_AIRPORT ]</span> <span>[ +94 77 638 0753 ]</span></div><div class="hero-title-wrap" id="heroTitle"><div class="hero-eyebrow mono">SRI LANKA / PRIVATE MOBILITY / 2026</div><h1>SUN<span class="gold">RISE</span><br><i>CABS</i></h1><p>Rent the island. Drive the hills. Arrive differently.</p></div><div class="hero-visual"><div class="visual-orbit"></div><div class="visual-cross"></div><div class="mono visual-label">[ WEBGL_FLEET_ENGINE ]<br>[ TOUCH / POINTER ACTIVE ]</div></div><div class="hero-bottom"><div class="mono">SCROLL TO EXPLORE ↓</div><button class="hero-cta" data-go="calculator">BUILD A LIVE QUOTE <span>↗</span></button><div class="mono hero-status"><span class="status-dot"></span> SYSTEM ONLINE</div></div></div></section>
+<section class="manifesto reveal"><div class="manifesto-index mono">01 / 08</div><div><p class="mega-copy">A rental service<br>built like a <em>journey.</em></p><p class="body-copy">Sunrise Cabs connects airport transfers, self-drive rentals, chauffeur journeys and island-wide tours through one cinematic booking system. Choose a vehicle, shape the route and dispatch the quote directly to WhatsApp.</p></div></section>
+<section class="fleet section" id="fleet"><div class="section-heading reveal"><div><span class="eyebrow mono">02 / THE FLEET</span><h2>CHOOSE<br><em>YOUR RIDE.</em></h2></div><div class="heading-note mono">[ 08 VEHICLE CLASSES ]<br>[ INTERACTIVE SHOWROOM ]<br>[ SELECT → CALCULATE ]</div></div><div class="showroom-shell reveal"><div class="showroom" id="showroom"><div class="showroom-top mono"><span>[ 3D_SHOWROOM / LIVE ]</span><span id="showroomClass">GROUP TRANSIT VAN</span></div><div class="showroom-bottom"><div><strong id="showroomVehicle">TOYOTA KDH HIGH ROOF</strong><span class="mono" id="showroomSeats">11 SEATS</span></div><button id="explode" class="outline">[ EXPLODED_VIEW ]</button></div></div><aside class="showroom-aside"><div class="mono">[ SELECTED_FLEET ]</div><div class="selected-name" id="calculatorVehicle">TOYOTA KDH HIGH ROOF</div><div class="selected-class mono" id="calculatorClass">GROUP TRANSIT VAN</div><div class="selected-rule"></div><p>Rotate the procedural showroom with your pointer or touch. Select any vehicle to sync the booking engine.</p><button class="gold-button" data-go="calculator">PRICE THIS VEHICLE ↗</button></aside></div><div class="fleet-grid" id="fleetCards"></div></section>
+<section class="routes section" id="routes"><div class="section-heading reveal"><div><span class="eyebrow mono">03 / ROUTE MATRIX</span><h2>THE ISLAND<br><em>IS OPEN.</em></h2></div><div class="heading-note mono">[ MAJOR CORRIDORS ]<br>[ ESTIMATED DISTANCE ]<br>*ROUTE DISTANCE IS AN ESTIMATE</div></div><div class="route-grid reveal" id="routePresets"></div><div class="route-note mono">[ ROUTE DATA ] Use the preset as a starting estimate. Final trip distance and quotation are confirmed by Sunrise Cabs management.</div></section>
+<section class="calculator section" id="calculator"><div class="section-heading reveal"><div><span class="eyebrow mono">04 / QUOTATION ENGINE</span><h2>BUILD<br><em>THE QUOTE.</em></h2></div><div class="heading-note mono">[ LKR / USD ]<br>[ 50 / 100 / 200 / 300 KM ]<br>[ DOCUMENT FEE: LKR 300 ]</div></div><div class="calculator-grid reveal"><div class="calculator-panel"><div class="field-grid"><label class="field"><span class="mono">VEHICLE</span><select id="vehicleSelect"></select></label><label class="field"><span class="mono">ROUTE / PICKUP → DROP-OFF</span><input id="pickup" value="Kandy City Centre → Bandaranaike International Airport (CMB)"></label><label class="field"><span class="mono">DISTANCE / KM</span><input id="distance" type="number" min="0" value="115"></label><label class="field"><span class="mono">DAYS</span><input id="days" type="number" min="1" value="1"></label><label class="field"><span class="mono">PACKAGE / KM PER DAY</span><select id="packageKm"><option value="50">50 KM</option><option value="100" selected>100 KM</option><option value="200">200 KM</option><option value="300">300 KM</option></select></label><label class="field"><span class="mono">EXTRA HOURS</span><input id="extraHours" type="number" min="0" value="0"></label></div><div class="toggle-block"><span class="mono">SERVICE MODE</span><div class="toggle" id="serviceToggle"><button data-value="chauffeur" class="active">WITH_CHAUFFEUR</button><button data-value="selfdrive">SELF_DRIVE</button></div></div><div class="toggle-block"><span class="mono">CURRENCY</span><div class="toggle" id="currencyToggle"><button data-value="LKR" class="active">LKR</button><button data-value="USD">USD</button></div></div><button class="text-button" id="chauffeurInfo">[ SERVICE NOTES ] +</button></div><aside class="quote-card"><div class="mono">[ LIVE_QUOTE / ESTIMATE ]</div><div class="quote-total" id="quoteTotal">LKR —</div><div class="quote-meta mono" id="quoteMeta">[ SELECT PACKAGE ]</div><div class="quote-vehicle mono" id="selectedVehicle">[ TOYOTA KDH HIGH ROOF ]</div><div class="deposit-pair"><div><span class="mono">LOCAL DEPOSIT</span><strong id="depositLocal">—</strong></div><div><span class="mono">ABROAD DEPOSIT</span><strong id="depositAbroad">—</strong></div></div><button class="dispatch-button" data-go="book">CONTINUE TO DISPATCH ↗</button></aside></div></section>
+<section class="archive section" id="archive"><div class="section-heading reveal"><div><span class="eyebrow mono">05 / PHOTOGRAPHIC ARCHIVE</span><h2>FLEET<br><em>IN MOTION.</em></h2></div><div class="heading-note mono">[ MONOCHROME → COLOR ]<br>[ LIQUID HOVER ]<br>[ TAP FOR LIGHTBOX ]</div></div><div class="archive-grid reveal" id="galleryGrid"></div></section>
+<section class="rates section" id="rates"><div class="section-heading reveal"><div><span class="eyebrow mono">06 / MASTER MATRIX</span><h2>RATE<br><em>ARCHIVE.</em></h2></div><div class="heading-note mono">[ 24 HRS = 1 DAY ]<br>[ LKR ]<br>[ SUPPLIED SCHEDULE ]</div></div><div class="rate-table reveal"><div class="rate-header"><span>CLASS / VEHICLES</span><span>50 KM</span><span>100 KM</span><span>200 KM</span><span>300 KM</span><span>EXTRAS</span></div><div id="rateRows"></div></div><p class="table-foot mono">[ NOTE ] Exact 20–29 and 30+ day base figures were not supplied for every class. This interface intentionally does not fabricate those values. Extra-km, extra-hour, deposit and LKR 300 document rules remain explicit.</p></section>
+<section class="proof section reveal"><div class="section-heading"><div><span class="eyebrow mono">07 / SOCIAL PROOF</span><h2>WORDS<br><em>FROM THE ROAD.</em></h2></div><div class="heading-note mono">[ PROVIDED TESTIMONIALS ]<br>[ WHATSAPP / FACEBOOK ]</div></div><div class="review-grid"><article><span class="mono gold">[ WHATSAPP ]</span><p>“Best rent a car service in Kandy! Rented the Toyota KDH High Roof for our Sigiriya and Ella round tour. Impeccable condition, very clean interior, and the driver was extremely professional and punctual. 10/10!”</p><footer class="mono">DINUKA P. / COLOMBO · TOURIST GROUP</footer></article><article><span class="mono gold">[ FACEBOOK ]</span><p>“Needed an emergency airport drop to Bandaranaike International Airport (CMB) at 3:00 AM. Sunrise Cabs dispatched an Axio hybrid instantly. Great rates, transparent mileage calculation, and zero hidden fees. Highly recommended!”</p><footer class="mono">AZEEM R. / CORPORATE CLIENT</footer></article><article><span class="mono gold">[ WHATSAPP ]</span><p>“Transparent deposit policy and amazing fleet options. Taking the Vezel RS for a 14-day island tour was the best decision. WhatsApp booking made communication effortless.”</p><footer class="mono">SARAH M. / INTERNATIONAL TRAVELER</footer></article></div></section>
+<section class="book section" id="book"><div class="book-inner reveal"><div><span class="eyebrow mono">08 / DIRECT DISPATCH</span><h2>READY TO<br><em>MOVE?</em></h2><p>Send the configured quote to Sunrise Cabs on WhatsApp. Your selected vehicle, route, package and estimate are compiled automatically.</p></div><div class="book-form"><label class="field"><span class="mono">NAME</span><input id="name" placeholder="Your name"></label><label class="field"><span class="mono">TRAVEL DATE / FLIGHT</span><input id="date" placeholder="Travel date or CMB flight number"></label><label class="field"><span class="mono">PASSENGERS</span><input id="passengers" type="number" min="1" value="2"></label><label class="field"><span class="mono">NOTES</span><textarea id="notes" rows="4" placeholder="Luggage, pickup time, special requirements..."></textarea></label><button id="dispatch" class="dispatch-button">DISPATCH VIA WHATSAPP ↗</button><div class="mono dispatch-number">[ +94 77 638 0753 ] [ 24/7_DISPATCH ]</div></div></div></section>
 </main>
-<footer class="footer mono">SUNRISE RENT A CAR & CABS · KANDY, SRI LANKA · CMB · COLOMBO · ELLA · SIGIRIYA · GALLE<br>© 2026 SUNRISE CABS</footer>
-<div class="status mono">[ FLEET_STATUS :: ONLINE ]</div>
-<div class="cursor" id="cursor" aria-hidden="true"></div>
-<div class="lightbox" id="lightbox" aria-hidden="true">
-  <div class="lightbox-frame">
-    <button class="pill lightbox-close" id="lbClose">[ CLOSE ]</button>
-    <button class="pill lightbox-nav prev" id="lbPrev">‹</button>
-    <img id="lightboxImage" src="" alt="">
-    <button class="pill lightbox-nav next" id="lbNext">›</button>
-    <div class="lightbox-caption"><div><div class="vehicle-name" id="lightboxTitle">SUNRISE FLEET</div><div class="mono" id="lightboxMeta"></div></div><div class="mono">[ ESC ] [ ← → ]</div></div>
-  </div>
-</div>
+<footer class="footer"><div class="footer-brand">SUNRISE<br><em>CABS</em></div><div class="footer-meta mono">KANDY, SRI LANKA<br>CMB · COLOMBO · ELLA · SIGIRIYA · GALLE<br>© 2026 SUNRISE RENT A CAR & CABS</div><a class="footer-wa" href="https://wa.me/94776380753" target="_blank" rel="noopener">WHATSAPP ↗</a></footer>
+<div class="floating-status mono"><span id="tier">TIER-1 CINEMATIC</span> / <span id="fps">60 FPS</span> / <span id="viewport">MOBILE READY</span></div><div class="cursor" id="cursor"></div>
+<div class="lightbox" id="lightbox" aria-hidden="true"><div class="lightbox-inner"><button class="lb-close" id="lbClose">[ CLOSE ]</button><button class="lb-nav lb-prev" id="lbPrev">←</button><img id="lightboxImage" alt=""><button class="lb-nav lb-next" id="lbNext">→</button><div class="lb-caption"><div><strong id="lightboxTitle">SUNRISE FLEET</strong><span class="mono" id="lightboxMeta"></span></div><span class="mono">[ ESC ] [ ← → ]</span></div></div></div>
+<div class="info-modal" id="serviceInfo"><div class="info-card"><button id="closeServiceInfo">[ CLOSE ]</button><span class="eyebrow mono">SERVICE PROTOCOL</span><h3>CHAUFFEUR / SELF-DRIVE</h3><p>The estimate treats chauffeur service as an 8% planning allowance on the supplied rental base. Final driver, meals, overnight and route requirements are confirmed by management before booking.</p></div></div>
 <script type="module" src="app.js"></script>
-</body>
-</html>
+</body></html>
